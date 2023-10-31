@@ -1,6 +1,8 @@
 #include "SoftwareSerial.h"
 #include "DFRobotDFPlayerMini.h"
 
+#define version 1.0.0
+
 // Define the pins for the buttons and LED
 const int BUTTON_SPIDER_1 = 4; // Button for spider 1
 const int BUTTON_SPIDER_2 = 5; // Button for spider 2
