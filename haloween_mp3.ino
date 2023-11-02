@@ -18,7 +18,6 @@ const int LIGHTNING_PIN = 14;  // Connected to gate of mosfet for 12V light
 
 const int BUSY_PIN = 12;      // Pin for player busy 
 
-
 // Use pins 2 and 3 to communicate with DFPlayer Mini
 static const uint8_t PIN_MP3_TX = 2; // Connects to module's RX
 static const uint8_t PIN_MP3_RX = 3; // Connects to module's TX
@@ -61,7 +60,6 @@ void setup() {
   pinMode(BUTTON_SPIDER_3, INPUT_PULLUP);
   pinMode(BUTTON_SPIDER_4, INPUT_PULLUP);
 
-
   // Initialize LED pin
   pinMode(GODIS_PIN, OUTPUT);
   pinMode(LED_SPIDER_1, OUTPUT);
@@ -72,9 +70,7 @@ void setup() {
 
   digitalWrite(LED_SPIDER_1, HIGH);
   digitalWrite(LIGHTNING_PIN, LOW);
-
-
-
+  digitalWrite(GODIS_PIN, LOW);
 
   // Init serial port for DFPlayer Mini
   softwareSerial.begin(9600);
@@ -200,47 +196,71 @@ void button4_activity(int button4State)
   }
 }
 
+void button_reset_activity(int button1State)
+{
+  if (button1State != lastButton1State) {
+    lastButton4DebounceTime = millis();
+  }
+  if ((millis() - lastButton4DebounceTime) > debounceDelay) {
+    if (button1State == LOW) {
+      digitalWrite(LED_SPIDER_4, LOW);
+      digitalWrite(GODIS_PIN, HIGH);
+      player.loop(6);
+      delay(500);
+      gameOverBlink();
+      gameState = GAME_OVER;
+    }
+  }
+}
+
 void readButtons(void)
 {
-  static int button1State, button2State, button3State, button4State = 0;
+  int button1State = digitalRead(BUTTON_SPIDER_1);
+  int button2State = digitalRead(BUTTON_SPIDER_2);
+  int button3State = digitalRead(BUTTON_SPIDER_3);
+  int button4State = digitalRead(BUTTON_SPIDER_4);
   // Read the state of the buttons
   switch (gameState)
   {
     case INIT:
+      Serial.println("INIT");
       player.loop(6);
       gameState = WAIT_FOR_SPIDER_1;
+      digitalWrite(LED_SPIDER_1, HIGH);
+      
+      break;
     case WAIT_FOR_SPIDER_1:
-      button1State = digitalRead(BUTTON_SPIDER_1);
+      Serial.println("WAIT_FOR_SPIDER_1");
+      button1_activity(button1State);
+      lastButton1State = button1State;
       break;
     case WAIT_FOR_SPIDER_2:
-      button2State = digitalRead(BUTTON_SPIDER_2);
+      Serial.println("WAIT_FOR_SPIDER_2");
+      button2_activity(button2State);
+      lastButton2State = button2State;
       break;
     case WAIT_FOR_SPIDER_3:
-      button3State = digitalRead(BUTTON_SPIDER_3);
+      Serial.println("WAIT_FOR_SPIDER_3");
+      button3_activity(button3State);
+      lastButton3State = button3State;
       break;
     case WAIT_FOR_SPIDER_4:
-      button4State = digitalRead(BUTTON_SPIDER_4);
+      Serial.println("WAIT_FOR_SPIDER_4");
+      button4_activity(button4State);
+      lastButton4State = button4State;
       break;
     case WAIT_FOR_RESET:
-      button1State = digitalRead(BUTTON_SPIDER_1);
+      Serial.println("WAIT_FOR_RESET");
+      button_reset_activity(button1State);
       gameOverBlink();
+      lastButton1State = button1State;
       break;
     case GAME_OVER:
+      Serial.println("GAME_OVER");
       player.loop(6);
       gameState = WAIT_FOR_RESET;
       break;
   }
-
-  button1_activity(button1State);
-  button2_activity(button2State);
-  button3_activity(button3State);
-  button4_activity(button4State);
-  
-  // Update the last button states
-  lastButton1State = button1State;
-  lastButton2State = button2State;
-  lastButton3State = button3State;
-  lastButton4State = button4State;
 }
 
 void loop() {
